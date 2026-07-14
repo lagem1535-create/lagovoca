@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAGO PRO - Profile</title>
+    <!-- 고품질 UI 렌더링을 위한 외부 리소스 인덱싱 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <style>
+        /* 테마 전역 속성 정의 (미니멀 화이트, 글래스모피즘, 네온 퍼플) */
+        :root {
+            --bg-start: #fbfbfd;
+            --bg-end: #f0f2f5;
+            --primary-purple: #7000ff;
+            --primary-hover: #5200cc;
+            --aura-glow: rgba(112, 0, 255, 0.25);
+            --text-main: #1d1d1f;
+            --text-sub: #86868b;
+            --glass-bg: rgba(255, 255, 255, 0.5);
+            --glass-border: rgba(255, 255, 255, 0.7);
+            --glass-shadow: rgba(112, 0, 255, 0.03);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--bg-start), var(--bg-end));
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* 배경 유기적 반응형 HTML5 Canvas */
+        #canvas-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* 메인 레이아웃 홀더 */
+        .dashboard-container {
+            position: relative;
+            width: 90%;
+            max-width: 1100px;
+            height: 82vh;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 글래스모피즘 헤더 구조 */
+        .glass-header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 var(--glass-shadow);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand-logo {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-logo .accent {
+            color: var(--primary-purple);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-sub);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--primary-purple);
+        }
+
+        /* 메인 콘텐츠 카드 세션 분할 */
+        .profile-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1.8fr;
+            gap: 20px;
+            height: calc(100% - 75px);
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 var(--glass-shadow);
+        }
+
+        /* 좌측 카드 요약 정보 */
+        .profile-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 24px;
+            text-align: center;
+        }
+
+        /* ✨ 중요: 귀여운 동물 그래픽 및 퍼플 아우라 레이어 효과 */
+        .avatar-wrapper {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .avatar-aura-ring {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 25px 8px var(--aura-glow), inset 0 0 12px rgba(112, 0, 255, 0.1);
+            animation: auraPulse 3s infinite ease-in-out;
+            border: 1px solid rgba(112, 0, 255, 0.15);
+        }
+
+        /* 고양이 동물 그래픽 내부 구현 - SVG 고해상도 백터 구조 */
+        .animal-graphic-svg {
+            width: 75px;
+            height: 75px;
+            fill: var(--primary-purple);
+            filter: drop-shadow(0 4px 6px rgba(112, 0, 255, 0.15));
+        }
+
+        @keyframes auraPulse {
+            0% { box-shadow: 0 0 20px 4px var(--aura-glow), inset 0 0 12px rgba(112, 0, 255, 0.05); }
+            50% { box-shadow: 0 0 35px 14px rgba(112, 0, 255, 0.4), inset 0 0 16px rgba(112, 0, 255, 0.2); transform: scale(1.02); }
+            100% { box-shadow: 0 0 20px 4px var(--aura-glow), inset 0 0 12px rgba(112, 0, 255, 0.05); }
+        }
+
+        .avatar-edit-btn {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 34px;
+            height: 34px;
+            background: var(--primary-purple);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(112, 0, 255, 0.3);
+            transition: transform 0.2s ease;
+            z-index: 3;
+        }
+
+        .avatar-edit-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .user-display-name {
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: -0.3px;
+        }
+
+        .user-display-email {
+            font-size: 0.9rem;
+            color: var(--text-sub);
+            margin-bottom: 18px;
+        }
+
+        .membership-badge {
+            background: linear-gradient(135deg, var(--primary-purple), #9133ff);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            box-shadow: 0 4px 14px rgba(112, 0, 255, 0.2);
+            margin-bottom: auto;
+            letter-spacing: 0.5px;
+        }
+
+        .stats-container {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: rgba(255, 255, 255, 0.45);
+            border-radius: 18px;
+            padding: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .stat-box {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .stat-box:first-child {
+            border-right: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-value {
+            font-size: 1.45rem;
+            font-weight: 700;
+            color: var(--primary-purple);
+        }
+
+        .stat-label {
+            font-size: 0.78rem;
+            color: var(--text-sub);
+        }
+
+        /* 우측 입력 수정 폼 */
+        .settings-card {
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        .settings-card h3 {
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .settings-card h3 .material-icons-round {
+            color: var(--primary-purple);
+        }
+
+        .profile-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-group label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-sub);
+            padding-left: 2px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 13px 16px 13px 44px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.65);
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-wrapper input:focus {
+            border-color: var(--primary-purple);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(112, 0, 255, 0.08);
+        }
+
+        .input-wrapper .input-icon {
+            position: absolute;
+            left: 14px;
+            color: var(--text-sub);
+            font-size: 20px;
+        }
+
+        .input-wrapper input:focus + .input-icon {
+            color: var(--primary-purple);
+        }
+
+        .input-wrapper.disabled input {
+            background: rgba(0, 0, 0, 0.02);
+            color: var(--text-sub);
+            cursor: not-allowed;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary-purple);
+            color: white;
+            box-shadow: 0 4px 12px rgba(112, 0, 255, 0.15);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(0, 0, 0, 0.04);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(0, 0, 0, 0.07);
+        }
+
+        /* 피드백용 플로팅 토스트 */
+        .toast {
+            position: absolute;
+            bottom: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 28px;
+            border-radius: 50px;
+            color: var(--primary-purple);
+            font-weight: 500;
+            font-size: 0.9rem;
+            z-index: 10;
+            transition: bottom 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+        }
+
+        .toast.show {
+            bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 백그라운드 입자 상호작용 캔버스 레이어 -->
+    <canvas id="canvas-background"></canvas>
+
+    <div class="dashboard-container">
+        <!-- 상단 내비게이션 바 헤더 -->
+        <header class="glass-header">
+            <div class="logo-area">
+                <span class="brand-logo">LAGO <span class="accent">PRO</span></span>
+            </div>
+            <nav class="nav-links">
+                <a href="../main/index.html"><span class="material-icons-round" style="font-size:18px; margin-right:4px;">home</span>대시보드</a>
+                <a href="#" class="active"><span class="material-icons-round" style="font-size:18px; margin-right:4px;">account_circle</span>프로필</a>
+            </nav>
+        </header>
+
+        <!-- 프로필 레이아웃 바디 구역 -->
+        <main class="profile-content">
+            
+            <!-- 좌측 사이드 정보 카드 컴포넌트 -->
+            <section class="profile-card glass-card">
+                <div class="avatar-wrapper">
+                    <!-- 퍼플 광채 아우라 링과 귀여운 고양이 벡터 임베딩 (사진 1 아이콘 완전 제외) -->
+                    <div class="avatar-aura-ring" id="avatar-container">
+                        <svg class="animal-graphic-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2c-1.373 0-2.613.633-3.441 1.614C7.732 3.197 6.643 3 5.5 3c-1.933 0-3.5 1.567-3.5 3.5 0 2.224 1.341 4.793 3.52 7.214C7.433 15.823 9.774 17.5 12 17.5s4.567-1.677 6.48-3.786c2.179-2.421 3.52-4.99 3.52-7.214 0-1.933-1.567-3.5-3.5-3.5-1.143 0-2.232.197-3.059.614C14.613 2.633 13.373 2 12 2zm-4.5 7.5c-.828 0-1.5-.672-1.5-1.5s.672-1.5 1.5-1.5 1.5 0 1.5 1.5-.672 1.5-1.5 1.5zm9 0c-.828 0-1.5-.672-1.5-1.5s.672-1.5 1.5-1.5 1.5 0 1.5 1.5-.672 1.5-1.5 1.5zm-4.5 4c-1.381 0-2.5-1.119-2.5-2.5h5c0 1.381-1.119 2.5-2.5 2.5z"/>
+                            <path d="M2 20c0-1.105.895-2 2-2h16c1.105 0 2 .895 2 2v2H2v-2z" opacity="0.3"/>
+                        </svg>
+                    </div>
+                    <label for="img-file-input" class="avatar-edit-btn">
+                        <span class="material-icons-round" style="font-size:16px;">photo_camera</span>
+                        <input type="file" id="img-file-input" accept="image/*" hidden>
+                    </label>
+                </div>
+                <h2 class="user-display-name" id="name-view">Premium User</h2>
+                <p class="user-display-email">user@ex.com</p>
+                <div class="membership-badge">PRO MEMBER</div>
+
+                <div class="stats-container">
+                    <div class="stat-box">
+                        <span class="stat-value" id="count-words">524</span>
+                        <span class="stat-label">학습 단어 수</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-value" id="count-days">12</span>
+                        <span class="stat-label">연속 출석일</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 우측 설정 양식 컨트롤러 -->
+            <section class="settings-card glass-card">
+                <h3><span class="material-icons-round">manage_accounts</span> 계정 프로필 관리</h3>
+                <div class="profile-form">
+                    <div class="input-group">
+                        <label for="username-field">사용자 닉네임</label>
+                        <div class="input-wrapper">
+                            <span class="material-icons-round input-icon">badge</span>
+                            <input type="text" id="username-field" value="Premium User">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>이메일 계정</label>
+                        <div class="input-wrapper disabled">
+                            <span class="material-icons-round input-icon">mail</span>
+                            <input type="email" value="user@ex.com" readonly>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="bio-field">상태 다짐 메세지</label>
+                        <div class="input-wrapper">
+                            <span class="material-icons-round input-icon">bolt</span>
+                            <input type="text" id="bio-field" placeholder="오늘도 화이팅! 🦾">
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button type="button" class="btn-secondary" id="btn-cancel">초기화</button>
+                        <button type="button" class="btn-primary" id="btn-confirm">저장하기</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 상태 알림 팝업 토스트 -->
+    <div id="toast-bar" class="toast glass-card">성공적으로 반영되었습니다.</div>
+
+    <script>
+        /* 1. Canvas 배경 유기적 입자 흐름 로직 */
+        const canvas = document.getElementById('canvas-background');
+        const ctx = canvas.getContext('2d');
+        let dots = [];
+
+        function initCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            dots = [];
+            for (let i = 0; i < 35; i++) {
+                dots.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.25,
+                    vy: (Math.random() - 0.5) * 0.25,
+                    r: Math.random() * 2 + 1
+                });
+            }
+        }
+
+        function drawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(112, 0, 255, 0.25)';
+            
+            dots.forEach(d => {
+                d.x += d.vx;
+                d.y += d.vy;
+                if (d.x < 0 || d.x > canvas.width) d.vx *= -1;
+                if (d.y < 0 || d.y > canvas.height) d.vy *= -1;
+                
+                ctx.beginPath();
+                ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            for(let i=0; i<dots.length; i++) {
+                for(let j=i+1; j<dots.length; j++) {
+                    let dist = Math.hypot(dots[i].x - dots[j].x, dots[i].y - dots[j].y);
+                    if(dist < 140) {
+                        ctx.strokeStyle = `rgba(112, 0, 255, ${0.1 * (1 - dist/140)})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(dots[i].x, dots[i].y);
+                        ctx.lineTo(dots[j].x, dots[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(drawCanvas);
+        }
+
+        window.addEventListener('resize', initCanvas);
+        initCanvas();
+        drawCanvas();
+
+
+        /* 2. 클라이언트 인터랙션 제어 로직 */
+        const nameInput = document.getElementById('username-field');
+        const bioInput = document.getElementById('bio-field');
+        const nameView = document.getElementById('name-view');
+        const avatarContainer = document.getElementById('avatar-container');
+        const imgInput = document.getElementById('img-file-input');
+        const toast = document.getElementById('toast-bar');
+
+        let currentProfile = {
+            name: localStorage.getItem('lago_name') || "Premium User",
+            bio: localStorage.getItem('lago_bio') || "",
+            img: localStorage.getItem('lago_img') || ""
+        };
+
+        function updateUI() {
+            nameInput.value = currentProfile.name;
+            bioInput.value = currentProfile.bio;
+            nameView.textContent = currentProfile.name;
+            if (currentProfile.img) {
+                avatarContainer.style.backgroundImage = `url(${currentProfile.img})`;
+                avatarContainer.style.backgroundSize = 'cover';
+                avatarContainer.style.backgroundPosition = 'center';
+                avatarContainer.innerHTML = ''; // 커스텀 업로드 시 기본 고양이 그래픽 소멸 처리
+            }
+        }
+
+        function triggerToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        document.getElementById('btn-confirm').addEventListener('click', () => {
+            if(!nameInput.value.trim()) {
+                triggerToast("🚫 사용자 닉네임을 올바르게 기입해주세요.");
+                return;
+            }
+            currentProfile.name = nameInput.value.trim();
+            currentProfile.bio = bioInput.value.trim();
+            
+            localStorage.setItem('lago_name', currentProfile.name);
+            localStorage.setItem('lago_bio', currentProfile.bio);
+            nameView.textContent = currentProfile.name;
+            triggerToast("✨ 프로필 설정 동기화가 성공적으로 끝났습니다.");
+        });
+
+        document.getElementById('btn-cancel').addEventListener('click', () => {
+            updateUI();
+            triggerToast("🔄 기존 설정값으로 복구되었습니다.");
+        });
+
+        imgInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    currentProfile.img = evt.target.result;
+                    localStorage.setItem('lago_img', evt.target.result);
+                    avatarContainer.style.backgroundImage = `url(${evt.target.result})`;
+                    avatarContainer.style.backgroundSize = 'cover';
+                    avatarContainer.style.backgroundPosition = 'center';
+                    avatarContainer.innerHTML = '';
+                    triggerToast("📸 새로운 프로필 이미지가 지정되었습니다.");
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 어플리케이션 초기화 구동
+        updateUI();
+    </script>
+</body>
+</html>

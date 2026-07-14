@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAGO PRO - 계정 프로필 및 아바타 상점</title>
+    <!-- 구글 웹 폰트 및 고해상도 머티리얼 아이콘 셋 정의 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <script>
+        // 세션 인스턴스 검증 기반 라우팅 디펜더 수호자
+        if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = '../login/index.html';
+        }
+    </script>
+    <style>
+        :root {
+            --bg-start: #f6f8fa;
+            --bg-end: #edf0f5;
+            --primary-purple: #7000ff;
+            --primary-purple-glow: rgba(112, 0, 255, 0.15);
+            --text-main: #1d1d1f;
+            --text-sub: #86868b;
+            --glass-bg: rgba(255, 255, 255, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: rgba(112, 0, 255, 0.03);
+            --input-bg: rgba(255, 255, 255, 0.6);
+            --input-border: rgba(0, 0, 0, 0.05);
+            --diamond-blue: #3b82f6;
+            --diamond-bg: #eff6ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--bg-start), var(--bg-end));
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* 백그라운드 구동용 고성능 HTML5 Canvas */
+        #canvas-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* 메인 대시보드 마스터 프레임 */
+        .dashboard-container {
+            position: relative;
+            width: 90%;
+            max-width: 1100px;
+            height: 85vh;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 상단 네비게이션 미니멀 헤더 */
+        .glass-header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 var(--glass-shadow);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand-logo {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-logo .accent {
+            color: var(--primary-purple);
+        }
+
+        .header-right-zone {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        /* 다이아몬드 포인트 상태 알림창 컴포넌트 */
+        .diamond-badge-box {
+            background: var(--diamond-bg);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            padding: 8px 20px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            color: var(--diamond-blue);
+            font-size: 1.05rem;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.05);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-sub);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--primary-purple);
+        }
+
+        /* 하단 메인 2분할 뷰 포트 그리드 바디 */
+        .profile-content-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1.8fr;
+            gap: 20px;
+            height: calc(100% - 75px);
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 var(--glass-shadow);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+
+        /* 좌측 카드 사용자 개요 프레임 */
+        .profile-summary-card {
+            align-items: center;
+            justify-content: space-between;
+            text-align: center;
+        }
+
+        .avatar-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        /* 프로필 아바타 래퍼 객체 (상점 가기 트리거 인터랙션 탑재) */
+        .avatar-holder {
+            position: relative;
+            width: 145px;
+            height: 145px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 10px 30px var(--primary-purple-glow);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            border: 4px solid white;
+            cursor: pointer;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .avatar-holder:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 35px rgba(112, 0, 255, 0.3);
+            border-color: rgba(112, 0, 255, 0.2);
+        }
+
+        .avatar-holder .avatar-icon {
+            font-size: 75px;
+            color: var(--primary-purple);
+        }
+
+        .avatar-holder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 아바타 오버레이 호버 가이드 */
+        .avatar-overlay-hint {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: rgba(112, 0, 255, 0.85);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 6px 0;
+            transform: translateY(100%);
+            transition: transform 0.25s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .avatar-holder:hover .avatar-overlay-hint {
+            transform: translateY(0);
+        }
+
+        .summary-name {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 6px;
+        }
+
+        .summary-email {
+            font-size: 0.95rem;
+            color: var(--text-sub);
+            margin-bottom: 20px;
+        }
+
+        .badge-pro {
+            background: var(--primary-purple);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 6px 16px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px var(--primary-purple-glow);
+        }
+
+        /* 하단 가로형 데이터 메트릭스 블록 */
+        .stats-horizontal-box {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 18px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            padding: 16px 0;
+            margin-bottom: 10px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stat-item:first-child {
+            border-right: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-purple);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            font-weight: 500;
+        }
+
+        /* 우측 멀티체인징 패널 레이아웃 스왑 컨테이너 */
+        .right-display-panel {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .panel-view {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            transform: translateY(10px);
+        }
+
+        .panel-view.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .profile-management-card {
+            justify-content: flex-start;
+            gap: 24px;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .title-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title .title-icon {
+            color: var(--primary-purple);
+        }
+
+        .section-title .shop-icon {
+            color: var(--diamond-blue);
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-sub);
+            padding-left: 4px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            color: var(--text-sub);
+            font-size: 20px;
+        }
+
+        .form-control {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 14px;
+            padding: 16px 16px 16px 48px;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.25s ease;
+        }
+
+        .form-control:focus {
+            background: white;
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 0 4px var(--primary-purple-glow);
+        }
+
+        .form-control:disabled {
+            background: rgba(0, 0, 0, 0.02);
+            color: var(--text-sub);
+            cursor: not-allowed;
+        }
+
+        /* 아바타 고유 상점 그리드 테마뷰 */
+        .shop-description {
+            font-size: 0.95rem;
+            color: var(--text-sub);
+            margin-top: -8px;
+            margin-bottom: 8px;
+        }
+
+        .avatar-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            overflow-y: auto;
+            padding-right: 4px;
+            flex: 1;
+        }
+
+        .avatar-shop-item {
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .avatar-shop-item:hover {
+            background: white;
+            border-color: var(--primary-purple);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.02);
+        }
+
+        .avatar-shop-item.equipped {
+            border: 2px solid var(--primary-purple);
+            background: rgba(112, 0, 255, 0.02);
+        }
+
+        .shop-img-wrapper {
+            width: 65px;
+            height: 65px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #eee;
+            border: 1px solid rgba(0,0,0,0.05);
+            flex-shrink: 0;
+        }
+
+        .shop-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .shop-item-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .shop-item-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .shop-item-status {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .price-tag {
+            color: var(--diamond-blue);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .status-owned {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .status-active {
+            color: var(--primary-purple);
+            font-weight: 700;
+        }
+
+        .view-switch-btn {
+            background: rgba(112, 0, 255, 0.08);
+            color: var(--primary-purple);
+            border: none;
+            padding: 6px 14px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .view-switch-btn:hover {
+            background: var(--primary-purple);
+            color: white;
+        }
+
+        .action-button-group {
+            margin-top: auto;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding-top: 10px;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary {
+            background: rgba(0, 0, 0, 0.04);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(0, 0, 0, 0.08);
+        }
+
+        .btn-primary {
+            background: var(--primary-purple);
+            color: white;
+            box-shadow: 0 4px 14px var(--primary-purple-glow);
+        }
+
+        .btn-primary:hover {
+            background: #5b00d6;
+            box-shadow: 0 6px 20px rgba(112, 0, 255, 0.25);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 백그라운드 구동용 비정형 입자 연결 네트워크 망 매트릭스 캔버스 -->
+    <canvas id="canvas-background"></canvas>
+
+    <div class="dashboard-container">
+        <!-- 메인 탑 상단 바 인클루더 -->
+        <header class="glass-header">
+            <div class="logo-area">
+                <span class="brand-logo">LAGO <span class="accent">PRO</span></span>
+            </div>
+            <div class="header-right-zone">
+                <!-- 다이아몬드 지갑 보유 잔액 모니터 (초기값 320 P 기반 로드 바인딩 구조) -->
+                <div class="diamond-badge-box" title="현재 보유 다이아몬드 포인트">
+                    <span class="material-icons-round">layers</span>
+                    <span id="top-diamond-points">320 P</span>
+                </div>
+                <nav class="nav-links">
+                    <a href="../main/index.html"><span class="material-icons-round" style="font-size:18px; margin-right:4px;">home</span>대시보드</a>
+                    <a href="#" class="active"><span class="material-icons-round" style="font-size:18px; margin-right:4px;">account_circle</span>프로필</a>
+                    <a href="../continue/index.html"><span class="material-icons-round" style="font-size:18px; margin-right:4px;">local_fire_department</span>연속 학습</a>
+                </nav>
+            </div>
+        </header>
+
+        <!-- 프로필 레이아웃 결합 메인 시각 바디 구역 -->
+        <main class="profile-content-grid">
+            <!-- [좌측 구역] 개인 프로필 미니멀 요약 대시 카드 -->
+            <section class="profile-summary-card glass-card">
+                <div class="avatar-section">
+                    <!-- 아바타 이미지 서클 (클릭 시 아바타 상점 탭인 VIEW 2로 변환 스위칭 가동) -->
+                    <div class="avatar-holder" id="avatar-click-zone" title="클릭하여 프로필 상점 이동">
+                        <div id="avatar-image-container" style="width:100%; height:100%; display:flex; justify-content:center; align-items:center;">
+                            <span class="material-icons-round avatar-icon">smart_toy</span>
+                        </div>
+                        <div class="avatar-overlay-hint">
+                            <span class="material-icons-round" style="font-size: 14px;">shopping_bag</span>상점 열기
+                        </div>
+                    </div>
+                    <h2 class="summary-name" id="side-name-display">Premium User</h2>
+                    <p class="summary-email" id="side-email-display">user@ex.com</p>
+                    <span class="badge-pro">PRO MEMBER</span>
+                </div>
+
+                <!-- 유저 연동 분석 통계 디스플레이 보드 -->
+                <div class="stats-horizontal-box">
+                    <div class="stat-item">
+                        <span class="stat-value" id="stat-words-count">...</span>
+                        <span class="stat-label">학습 단어 수</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="stat-streak-count">...</span>
+                        <span class="stat-label">연속 출석일</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- [우측 구역] 동적 데이터 제어 및 패널 변환 메인 프레임워크 -->
+            <div class="right-display-panel">
+                
+                <!-- VIEW 1: 기본 계정 인포메이션 수정 양식 보드 -->
+                <section class="panel-view glass-card profile-management-card active" id="view-profile-main">
+                    <div class="section-title">
+                        <div class="title-left">
+                            <span class="material-icons-round title-icon">manage_accounts</span>계정 프로필 관리
+                        </div>
+                        <button class="view-switch-btn" id="btn-go-shop">
+                            <span class="material-icons-round" style="font-size:15px;">storefront</span>아바타 상점 가기
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="input-nickname">사용자 닉네임</label>
+                        <div class="input-wrapper">
+                            <span class="material-icons-round input-icon">badge</span>
+                            <input type="text" id="input-nickname" class="form-control" placeholder="변경할 닉네임을 지정하세요.">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="input-email">이메일 주소</label>
+                        <div class="input-wrapper">
+                            <span class="material-icons-round input-icon">mail</span>
+                            <input type="email" id="input-email" class="form-control" disabled>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="input-message">상태 다짐 메세지</label>
+                        <div class="input-wrapper">
+                            <span class="material-icons-round input-icon">bolt</span>
+                            <input type="text" id="input-message" class="form-control" placeholder="학습에 임하는 오늘의 각오를 한줄 적어주세요.">
+                        </div>
+                    </div>
+
+                    <div class="action-button-group">
+                        <button class="btn btn-secondary" id="btn-reset">초기화</button>
+                        <button class="btn btn-primary" id="btn-save">저장하기</button>
+                    </div>
+                </section>
+
+                <!-- VIEW 2: 동물 테마 아바타 상점 거래 보드 구역 -->
+                <section class="panel-view glass-card profile-management-card" id="view-avatar-shop">
+                    <div class="section-title">
+                        <div class="title-left">
+                            <span class="material-icons-round shop-icon">storefront</span>프로필 아바타 상점
+                        </div>
+                        <button class="view-switch-btn" id="btn-go-profile" style="background:rgba(0,0,0,0.05); color:var(--text-main);">
+                            <span class="material-icons-round" style="font-size:15px;">arrow_back</span>정보 수정으로
+                        </button>
+                    </div>
+                    <p class="shop-description">보유 중인 다이아몬드(P)를 정가 차감하여 동물 전용 스킨을 영구 잠금 해제 및 활성화할 수 있습니다.</p>
+
+                    <!-- 이미지 확장자 락을 .png로 완전 교정한 상점 크리쳐 리스트 뷰포트 -->
+                    <div class="avatar-grid" id="shop-items-container">
+                        <!-- JS 내부 데이터셋 런타임 제어 루프로 실시간 노드 생성 주입 -->
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        /* [1] Canvas 기반 기하학 분자 네트워크 궤적 물리 모델링 코어 */
+        const canvas = document.getElementById('canvas-background');
+        const ctx = canvas.getContext('2d');
+        let dots = [];
+
+        function initCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            dots = [];
+            for (let i = 0; i < 35; i++) {
+                dots.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.25,
+                    vy: (Math.random() - 0.5) * 0.25,
+                    r: Math.random() * 2 + 1
+                });
+            }
+        }
+
+        function drawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(112, 0, 255, 0.25)';
+            
+            dots.forEach(d => {
+                d.x += d.vx;
+                d.y += d.vy;
+                if (d.x < 0 || d.x > canvas.width) d.vx *= -1;
+                if (d.y < 0 || d.y > canvas.height) d.vy *= -1;
+                ctx.beginPath();
+                ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            for(let i=0; i<dots.length; i++) {
+                for(let j=i+1; j<dots.length; j++) {
+                    let dist = Math.hypot(dots[i].x - dots[j].x, dots[i].y - dots[j].y);
+                    if(dist < 140) {
+                        ctx.strokeStyle = `rgba(112, 0, 255, ${0.1 * (1 - dist/140)})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(dots[i].x, dots[i].y);
+                        ctx.lineTo(dots[j].x, dots[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(drawCanvas);
+        }
+        window.addEventListener('resize', initCanvas);
+        initCanvas();
+        drawCanvas();
+
+
+        /* [2] 데이터 통신, 토큰 처리 및 Firebase 데이터베이스 동기화 마스터 오케스트레이션 */
+        const DB_BASE_URL = "https://fir-2-f3b80-default-rtdb.asia-southeast1.firebasedatabase.app";
+        const currentUserId = sessionStorage.getItem('currentUserId') || "user";
+        const userEmail = sessionStorage.getItem('userEmail') || "user@ex.com";
+
+        // 로컬 가용 상태 저장소 밸런서
+        let userPoints = 320; 
+        let currentEquippedAvatar = "default";
+        let ownedAvatarsList = ["default"];
+
+        // 아바타 상품 고유 데이터 레지스트리 (.png 전면 교정 완료)
+        const AVATAR_SHOP_REGISTRY = [
+            { id: "default", name: "기본 안드로이드 봇", price: 0, isDefault: true, icon: "smart_toy" },
+            { id: "turtle", name: "바다 거북이 스킨", price: 100, path: "../단어장_프로필_이미지/프로필 이미지_거북이.png" },
+            { id: "fish", name: "니모 흰동가리 스킨", price: 120, path: "../단어장_프로필_이미지/프로필 이미지_물고기.png" },
+            { id: "seal", name: "아기 물범 스킨", price: 150, path: "../단어장_프로필_이미지/프로필 이미지_물범.png" },
+            { id: "tiger", name: "아기 호랑이 스킨", price: 200, path: "../단어장_프로필_이미지/프로필 이미지_호랑이.png" }
+        ];
+
+        // UI 바인딩 DOM 노드 포인터 셀렉터 정의
+        const viewProfileMain = document.getElementById('view-profile-main');
+        const viewAvatarShop = document.getElementById('view-avatar-shop');
+        const avatarClickZone = document.getElementById('avatar-click-zone');
+        const btnGoShop = document.getElementById('btn-go-shop');
+        const btnGoProfile = document.getElementById('btn-go-profile');
+        const topDiamondPoints = document.getElementById('top-diamond-points');
+        const avatarImageContainer = document.getElementById('avatar-image-container');
+        const shopItemsContainer = document.getElementById('shop-items-container');
+
+        const sideNameDisplay = document.getElementById('side-name-display');
+        const sideEmailDisplay = document.getElementById('side-email-display');
+        const statWordsCount = document.getElementById('stat-words-count');
+        const statStreakCount = document.getElementById('stat-streak-count');
+        const inputNickname = document.getElementById('input-nickname');
+        const inputEmail = document.getElementById('input-email');
+        const inputMessage = document.getElementById('input-message');
+        const btnReset = document.getElementById('btn-reset');
+        const btnSave = document.getElementById('btn-save');
+
+        let initialProfileData = { nickname: "Premium User", message: "오늘도 화이팅! 💪" };
+
+        // 🌟 [핵심 기능 기동] Firebase Realtime Database 지정 토큰 동기화 업로더 함수
+        async function saveUserTokenToFirebase(tokenType = "authToken", tokenValue) {
+            if (!tokenValue) return;
+            
+            try {
+                // 기존 데이터 스키마를 해치지 않도록 PATCH 메소드로 지정 경로에 정밀 보존 주입
+                const response = await fetch(`${DB_BASE_URL}/users/${currentUserId}/tokens.json`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        [tokenType]: tokenValue,
+                        updatedAt: new Date().toISOString()
+                    })
+                });
+                
+                if (response.ok) {
+                    console.log(`[Firebase 토큰 통신] 성공적으로 '${tokenType}' 정보가 동기화 세이브되었습니다.`);
+                }
+            } catch (error) {
+                console.error("[Firebase 토큰 에러] 실시간 원격 토큰 동기화 전송 실패:", error);
+            }
+        }
+
+        // 라우팅 스왑 라우터
+        function switchView(target) {
+            if (target === 'shop') {
+                viewProfileMain.classList.remove('active');
+                viewAvatarShop.classList.add('active');
+            } else {
+                viewAvatarShop.classList.remove('active');
+                viewProfileMain.classList.add('active');
+            }
+        }
+
+        avatarClickZone.addEventListener('click', () => switchView('shop'));
+        btnGoShop.addEventListener('click', () => switchView('shop'));
+        btnGoProfile.addEventListener('click', () => switchView('profile'));
+
+        // 파이어베이스 트랜잭션 전용 풀 데이터 로더
+        async function loadProfileAndShopData() {
+            inputEmail.value = userEmail;
+            sideEmailDisplay.textContent = userEmail;
+
+            try {
+                const profileRes = await fetch(`${DB_BASE_URL}/users/${currentUserId}/profile.json`);
+                const profileData = await profileRes.json();
+                
+                if (profileData) {
+                    initialProfileData.nickname = profileData.nickname || "Premium User";
+                    initialProfileData.message = profileData.message || "오늘도 화이팅! 💪";
+                    userPoints = typeof profileData.points !== 'undefined' ? profileData.points : 320;
+                    currentEquippedAvatar = profileData.equippedAvatar || "default";
+                    ownedAvatarsList = profileData.ownedAvatars || ["default"];
+                }
+                
+                applyProfileToUI(initialProfileData.nickname, initialProfileData.message);
+                updatePointsDisplay();
+                renderLeftAvatar();
+                renderShopGrid();
+
+                // 🌟 [토큰 세이브 구동 파이프라인] 브라우저 로그인 세션에 저장된 토큰이 식별되면 자동 원격 저장 활성화
+                const currentSessionToken = sessionStorage.getItem('accessToken');
+                if (currentSessionToken) {
+                    await saveUserTokenToFirebase("sessionToken", currentSessionToken);
+                }
+
+                const streakRes = await fetch(`${DB_BASE_URL}/streaks/${currentUserId}.json`);
+                const streakData = await streakRes.json();
+                statStreakCount.textContent = (streakData && typeof streakData.count !== 'undefined') ? streakData.count : "12";
+
+                const historyRes = await fetch(`${DB_BASE_URL}/history/${currentUserId}.json`);
+                const historyData = await historyRes.json();
+                if (historyData) {
+                    statWordsCount.textContent = Object.keys(historyData).length * 42 + 20; 
+                } else {
+                    statWordsCount.textContent = "524";
+                }
+
+            } catch (error) {
+                console.error("Firebase 서버 지연에 따른 폴백 모드 캐싱 기동:", error);
+                applyProfileToUI(initialProfileData.nickname, initialProfileData.message);
+                updatePointsDisplay();
+                renderLeftAvatar();
+                renderShopGrid();
+                statStreakCount.textContent = "12";
+                statWordsCount.textContent = "524";
+            }
+        }
+
+        function applyProfileToUI(nickname, message) {
+            sideNameDisplay.textContent = nickname;
+            inputNickname.value = nickname;
+            inputMessage.value = message;
+        }
+
+        function updatePointsDisplay() {
+            topDiamondPoints.textContent = `${userPoints} P`;
+        }
+
+        // 좌측 사이드바 반응형 메인 프로필 아바타 컴포넌트 빌더
+        function renderLeftAvatar() {
+            const currentSkin = AVATAR_SHOP_REGISTRY.find(item => item.id === currentEquippedAvatar) || AVATAR_SHOP_REGISTRY[0];
+            if (currentSkin.isDefault) {
+                avatarImageContainer.innerHTML = `<span class="material-icons-round avatar-icon">${currentSkin.icon}</span>`;
+            } else {
+                avatarImageContainer.innerHTML = `<img src="${currentSkin.path}" alt="${currentSkin.name}" onerror="this.parentNode.innerHTML='<span class=material-icons-round style=font-size:75px;color:var(--primary-purple)>pets</span>';">`;
+            }
+        }
+
+        // 스토어 아이템 동적 그리드 생성 팩토리 루프
+        function renderShopGrid() {
+            shopItemsContainer.innerHTML = "";
+
+            AVATAR_SHOP_REGISTRY.forEach(item => {
+                const isOwned = ownedAvatarsList.includes(item.id);
+                const isEquipped = currentEquippedAvatar === item.id;
+
+                const card = document.createElement('div');
+                card.className = `avatar-shop-item ${isEquipped ? 'equipped' : ''}`;
+
+                let visualElement = "";
+                if (item.isDefault) {
+                    visualElement = `<div class="shop-img-wrapper" style="display:flex; justify-content:center; align-items:center; background:white; color:var(--primary-purple);"><span class="material-icons-round" style="font-size:32px;">${item.icon}</span></div>`;
+                } else {
+                    visualElement = `<div class="shop-img-wrapper"><img src="${item.path}" alt="${item.name}" onerror="this.parentNode.innerHTML='<span class=material-icons-round style=font-size:32px;color:var(--primary-purple)>pets</span>';"></div>`;
+                }
+
+                let statusString = "";
+                if (isEquipped) {
+                    statusString = `<span class="shop-item-status status-active"><span class="material-icons-round" style="font-size:14px;">check_circle</span>장착 중</span>`;
+                } else if (isOwned) {
+                    statusString = `<span class="shop-item-status status-owned">보유 중 (클릭 시 장착)</span>`;
+                } else {
+                    statusString = `<span class="shop-item-status price-tag"><span class="material-icons-round" style="font-size:14px;">layers</span>${item.price} P</span>`;
+                }
+
+                card.innerHTML = `
+                    ${visualElement}
+                    <div class="shop-item-info">
+                        <div class="shop-item-name">${item.name}</div>
+                        ${statusString}
+                    </div>
+                `;
+
+                card.addEventListener('click', () => handleShopItemInteraction(item));
+                shopItemsContainer.appendChild(card);
+            });
+        }
+
+        // 상점 자금 정산 및 구매 인터랙션 트랜잭션 수호자
+        async function handleShopItemInteraction(item) {
+            const isOwned = ownedAvatarsList.includes(item.id);
+
+            if (isOwned) {
+                currentEquippedAvatar = item.id;
+                renderLeftAvatar();
+                renderShopGrid();
+                await syncShopStateToFirebase();
+            } else {
+                if (userPoints < item.price) {
+                    alert(`보유 포인트가 부족합니다.\n필요 금액: ${item.price} P\n현재 다이아몬드: ${userPoints} P`);
+                    return;
+                }
+
+                if (confirm(`'${item.name}' 스킨을 결제 한도 ${item.price}P 만큼 차감하여 구매하시겠습니까?`)) {
+                    userPoints -= item.price; 
+                    ownedAvatarsList.push(item.id);
+                    currentEquippedAvatar = item.id;
+
+                    updatePointsDisplay();
+                    renderLeftAvatar();
+                    renderShopGrid();
+                    await syncShopStateToFirebase();
+                    alert(`정상 처리 완료되었습니다.\n잔여 자산: ${userPoints} P`);
+                }
+            }
+        }
+
+        // 아바타 보유 상태 동기화 인클루더
+        async function syncShopStateToFirebase() {
+            try {
+                await fetch(`${DB_BASE_URL}/users/${currentUserId}/profile.json`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        points: userPoints,
+                        equippedAvatar: currentEquippedAvatar,
+                        ownedAvatars: ownedAvatarsList
+                    })
+                });
+            } catch (e) {
+                console.warn("네트워크 지연으로 로컬 인메모리에 임시 기록:", e);
+            }
+        }
+
+        // 계정 인포메이션 세이브 프로세서 
+        async function saveProfileData() {
+            const updatedNickname = inputNickname.value.trim();
+            const updatedMessage = inputMessage.value.trim();
+
+            if (!updatedNickname) {
+                alert("적절한 사용자 닉네임을 할당해 주세요.");
+                return;
+            }
+
+            btnSave.disabled = true;
+            btnSave.textContent = "저장 중...";
+
+            try {
+                const response = await fetch(`${DB_BASE_URL}/users/${currentUserId}/profile.json`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nickname: updatedNickname,
+                        message: updatedMessage
+                    })
+                });
+
+                if (response.ok) {
+                    initialProfileData.nickname = updatedNickname;
+                    initialProfileData.message = updatedMessage;
+                    sideNameDisplay.textContent = updatedNickname;
+                    alert("프로필 데이터 셋업이 무사히 클라우드에 영구 백업되었습니다.");
+                }
+            } catch (error) {
+                console.error("원격 서버 데이터 주입 실패:", error);
+            } finally {
+                btnSave.disabled = false;
+                btnSave.textContent = "저장하기";
+            }
+        }
+
+        btnReset.addEventListener('click', () => {
+            if (confirm("입력 필드 상태를 초기 정적 데이터값으로 돌릴까요?")) {
+                applyProfileToUI(initialProfileData.nickname, initialProfileData.message);
+            }
+        });
+
+        btnSave.addEventListener('click', saveProfileData);
+
+        // 엔트리 포인터 메인 스타터 런처 가동
+        loadProfileAndShopData();
+    </script>
+</body>
+</html>

@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAGO PRO - Streak Calendar</title>
+    <!-- 구글 폰트 및 아이콘 에셋 인덱싱 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <script>
+        // 세션 로그인 방어 코드
+        if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = '../login/index.html';
+        }
+    </script>
+    <style>
+        :root {
+            --bg-start: #f6f8fa;
+            --bg-end: #edf0f5;
+            --primary-purple: #7000ff;
+            --streak-orange: #ff4b4b;
+            --streak-orange-glow: rgba(255, 75, 75, 0.15);
+            --text-main: #1d1d1f;
+            --text-sub: #86868b;
+            --glass-bg: rgba(255, 255, 255, 0.45);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: rgba(112, 0, 255, 0.03);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, var(--bg-start), var(--bg-end));
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* 백그라운드 반응형 HTML5 Canvas */
+        #canvas-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* 메인 레이아웃 홀더 */
+        .dashboard-container {
+            position: relative;
+            width: 90%;
+            max-width: 1100px;
+            height: 85vh;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 글래스모피즘 헤더 */
+        .glass-header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 var(--glass-shadow);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand-logo {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-logo .accent {
+            color: var(--primary-purple);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-sub);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--primary-purple);
+        }
+
+        /* 콘텐츠 화면 이분할 레이아웃 */
+        .continue-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1.6fr;
+            gap: 20px;
+            height: calc(100% - 75px);
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 var(--glass-shadow);
+            padding: 32px;
+        }
+
+        /* 좌측 캐릭터 레이아웃 코어 패널 */
+        .streak-summary-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+            isolation: isolate; /* 블렌딩/필터 레이어 격리 */
+        }
+
+        /* 라구 캐릭터 이미지 프레임 홀더 */
+        .character-avatar-wrapper {
+            position: relative;
+            width: 220px;
+            height: 180px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 24px;
+            background: transparent;
+        }
+
+        /* 📌 필터와 고대비 합성 조합으로 이미지 흰색 영역을 완벽하게 소거 */
+        .character-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            z-index: 2;
+            mix-blend-mode: multiply;
+            filter: contrast(1.05) brightness(1.02);
+            background-color: transparent;
+        }
+
+        .streak-count-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 12px;
+        }
+
+        .streak-count-title span {
+            color: var(--streak-orange);
+        }
+
+        .streak-sub-text {
+            font-size: 0.95rem;
+            color: var(--text-sub);
+            line-height: 1.6;
+            max-width: 280px;
+            word-break: keep-all;
+        }
+
+        /* 우측 캘린더 카드 스타일링 */
+        .calendar-card {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 8px;
+        }
+
+        .calendar-header h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .calendar-header h3 .title-icon {
+            color: var(--primary-purple);
+        }
+
+        .calendar-nav-btn {
+            background: rgba(0, 0, 0, 0.04);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            color: var(--text-main);
+            transition: background 0.2s;
+        }
+
+        .calendar-nav-btn:hover {
+            background: rgba(0, 0, 0, 0.08);
+        }
+
+        /* 달력 그리드 시스템 */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 12px;
+            flex: 1;
+        }
+
+        .weekday-label {
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-sub);
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .calendar-day {
+            background: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(0, 0, 0, 0.03);
+            border-radius: 14px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+            font-weight: 500;
+            min-height: 55px;
+            transition: all 0.2s ease;
+        }
+
+        .calendar-day.empty {
+            background: transparent;
+            border: none;
+            pointer-events: none;
+        }
+
+        .calendar-day.completed {
+            background: white;
+            border-color: rgba(255, 75, 75, 0.25);
+            box-shadow: 0 4px 12px rgba(255, 75, 75, 0.08);
+            color: var(--streak-orange);
+            font-weight: 700;
+        }
+
+        .calendar-day .day-number {
+            position: absolute;
+            top: 6px;
+            left: 8px;
+            font-size: 0.75rem;
+            color: var(--text-sub);
+        }
+
+        .calendar-day.completed .day-number {
+            color: var(--streak-orange);
+        }
+
+        /* 달력 칸 내부는 불꽃 유지 */
+        .day-streak-icon {
+            font-size: 24px !important;
+            color: var(--streak-orange);
+            margin-top: 10px;
+        }
+
+        .calendar-footer-info {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            background: rgba(255, 255, 255, 0.3);
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 백그라운드 입자 네트워크 캔버스 -->
+    <canvas id="canvas-background"></canvas>
+
+    <div class="dashboard-container">
+        <!-- 상단 헤더 영역 -->
+        <header class="glass-header">
+            <div class="logo-area">
+                <span class="brand-logo">LAGO <span class="accent">PRO</span></span>
+            </div>
+            <nav class="nav-links">
+                <a href="../main/index.html"><span class="material-icons-round" style="font-size:18px; margin-right:4px;">home</span>대시보드</a>
+                <a href="../profile/index.html"><span class="material-icons-round" style="font-size:18px; margin-right:4px;">account_circle</span>프로필</a>
+                <a href="#" class="active"><span class="material-icons-round" style="font-size:18px; margin-right:4px;">local_fire_department</span>연속 학습</a>
+            </nav>
+        </header>
+
+        <!-- 연속 학습 데이터 시각화 메인 보드 -->
+        <main class="continue-content">
+            <!-- 좌측 요약 스탯 패널 (라구 메인 캐릭터 카드) -->
+            <section class="streak-summary-card glass-card">
+                <div class="character-avatar-wrapper">
+                    <img src="" alt="LAGO Character" class="character-img" id="lago-char-img">
+                </div>
+                <h2 class="streak-count-title"><span id="streak-num-display">...</span>일 연속 완료</h2>
+                <p class="streak-sub-text" id="streak-msg-display">사용자 동기화 상태 파악 중...</p>
+            </section>
+
+            <!-- 우측 미니멀 달력 패널 -->
+            <section class="calendar-card glass-card">
+                <div class="calendar-header">
+                    <h3 id="calendar-month-year"><span class="material-icons-round title-icon">calendar_month</span>2026년 7월</h3>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="calendar-nav-btn" id="prev-month-btn"><span class="material-icons-round">chevron_left</span></button>
+                        <button class="calendar-nav-btn" id="next-month-btn"><span class="material-icons-round">chevron_right</span></button>
+                    </div>
+                </div>
+
+                <!-- 달력 날짜 렌더링 플레이스홀더 -->
+                <div class="calendar-grid" id="calendar-days-grid">
+                    <!-- 스크립트로 동적 인젝션 수행 -->
+                </div>
+
+                <div class="calendar-footer-info">
+                    <span class="material-icons-round" style="font-size: 16px; color: var(--streak-orange);">local_fire_department</span>
+                    <span>불꽃 아이콘이 채워진 날은 단어 학습 또는 복습을 완료한 날입니다.</span>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        /* 1. Canvas 배경 입자 네트워크 렌더러 */
+        const canvas = document.getElementById('canvas-background');
+        const ctx = canvas.getContext('2d');
+        let dots = [];
+
+        function initCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            dots = [];
+            for (let i = 0; i < 35; i++) {
+                dots.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.25,
+                    vy: (Math.random() - 0.5) * 0.25,
+                    r: Math.random() * 2 + 1
+                });
+            }
+        }
+
+        function drawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'rgba(112, 0, 255, 0.25)';
+            
+            dots.forEach(d => {
+                d.x += d.vx;
+                d.y += d.vy;
+                if (d.x < 0 || d.x > canvas.width) d.vx *= -1;
+                if (d.y < 0 || d.y > canvas.height) d.vy *= -1;
+                ctx.beginPath();
+                ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            for(let i=0; i<dots.length; i++) {
+                for(let j=i+1; j<dots.length; j++) {
+                    let dist = Math.hypot(dots[i].x - dots[j].x, dots[i].y - dots[j].y);
+                    if(dist < 140) {
+                        ctx.strokeStyle = `rgba(112, 0, 255, ${0.1 * (1 - dist/140)})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(dots[i].x, dots[i].y);
+                        ctx.lineTo(dots[j].x, dots[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(drawCanvas);
+        }
+        window.addEventListener('resize', initCanvas);
+        initCanvas();
+        drawCanvas();
+
+
+        /* 2. Firebase 및 캐릭터 동적 엔진 로직 */
+        const DB_BASE_URL = "https://fir-2-f3b80-default-rtdb.asia-southeast1.firebasedatabase.app";
+        const currentUserId = sessionStorage.getItem('currentUserId') || "user";
+
+        const IMAGE_PATHS = {
+            disappointed: "../단어장/라구_화난.png", 
+            morning: "../단어장/라구_신난.png",      
+            lunch: "../단어장/라구_행복.png",        
+            evening: "../단어장/라구_울컥.png",      
+            midnight: "../단어장/라구_졸린.png"      
+        };
+
+        let currentYear = 2026;
+        let currentMonth = 6; 
+
+        const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+        const gridContainer = document.getElementById('calendar-days-grid');
+        const monthYearTitle = document.getElementById('calendar-month-year');
+        const streakDisplay = document.getElementById('streak-num-display');
+        const streakMsgDisplay = document.getElementById('streak-msg-display');
+        const lagoCharImg = document.getElementById('lago-char-img');
+
+        function updateCharacterAndMessage(streakCount) {
+            const currentHour = new Date().getHours();
+            let selectedPath = "";
+            
+            if (Number(streakCount) === 0 || !streakCount) {
+                selectedPath = IMAGE_PATHS.disappointed;
+                lagoCharImg.src = selectedPath;
+                streakMsgDisplay.innerHTML = "아직 오늘의 학습 기록이 없습니다.<br>지금 단어를 복습하고 첫 불꽃을 피워보세요!";
+                return;
+            }
+
+            if (currentHour >= 5 && currentHour < 12) {
+                selectedPath = IMAGE_PATHS.morning;
+                streakMsgDisplay.innerHTML = "좋은 아침이에요!<br>오늘도 화이팅해서 스트릭을 이어가요, 아침엔 해주세요!!";
+            } else if (currentHour >= 12 && currentHour < 18) {
+                selectedPath = IMAGE_PATHS.lunch;
+                streakMsgDisplay.innerHTML = "나른한 오후네요!<br>졸음을 복습으로 쫓아내고 오늘도 해줘!!";
+            } else if (currentHour >= 18 && currentHour < 24) {
+                selectedPath = IMAGE_PATHS.evening;
+                streakMsgDisplay.innerHTML = "벌써 저녁이에요...<br>스트릭이 깨지면 저녁엔 슬픈 라구가 된답니다 ㅠㅠ";
+            } else {
+                selectedPath = IMAGE_PATHS.midnight;
+                streakMsgDisplay.innerHTML = "이 시간에 안 자고 뭐해요?<br>얼른 자고 내일 또 새벽 실망시키지 말아줘요...";
+            }
+
+            lagoCharImg.src = selectedPath;
+        }
+
+        async function fetchAndRenderCalendar(year, month) {
+            gridContainer.innerHTML = '';
+            monthYearTitle.innerHTML = `<span class="material-icons-round title-icon">calendar_month</span>${year}년 ${month + 1}월`;
+            
+            let serverStreakCount = 0;
+            let serverHistoryDates = {};
+
+            try {
+                const streakRes = await fetch(`${DB_BASE_URL}/streaks/${currentUserId}.json`);
+                const streakData = await streakRes.json();
+                if (streakData && typeof streakData.count !== 'undefined') {
+                    serverStreakCount = streakData.count;
+                }
+
+                const historyRes = await fetch(`${DB_BASE_URL}/history/${currentUserId}.json`);
+                const historyData = await historyRes.json();
+                if (historyData) {
+                    serverHistoryDates = historyData;
+                }
+            } catch (error) {
+                console.error("Firebase 서버 연동 실패:", error);
+            }
+
+            streakDisplay.textContent = serverStreakCount;
+            updateCharacterAndMessage(serverStreakCount);
+
+            weekdays.forEach(day => {
+                const label = document.createElement('div');
+                label.className = 'weekday-label';
+                label.textContent = day;
+                gridContainer.appendChild(label);
+            });
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+
+            for (let i = 0; i < firstDayIndex; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'calendar-day empty';
+                gridContainer.appendChild(emptyCell);
+            }
+
+            for (let day = 1; day <= totalDays; day++) {
+                const dayCell = document.createElement('div');
+                dayCell.className = 'calendar-day';
+                
+                const numSpan = document.createElement('span');
+                numSpan.className = 'day-number';
+                numSpan.textContent = day;
+                dayCell.appendChild(numSpan);
+
+                const formattedMonth = String(month + 1).padStart(2, '0');
+                const formattedDay = String(day).padStart(2, '0');
+                const dateKey = `${year}-${formattedMonth}-${formattedDay}`;
+
+                if (serverHistoryDates[dateKey]) {
+                    dayCell.classList.add('completed');
+                    const flameIcon = document.createElement('span');
+                    flameIcon.className = 'material-icons-round day-streak-icon';
+                    flameIcon.textContent = 'local_fire_department';
+                    dayCell.appendChild(flameIcon);
+                }
+
+                gridContainer.appendChild(dayCell);
+            }
+        }
+
+        document.getElementById('prev-month-btn').addEventListener('click', () => {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            fetchAndRenderCalendar(currentYear, currentMonth);
+        });
+
+        document.getElementById('next-month-btn').addEventListener('click', () => {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            fetchAndRenderCalendar(currentYear, currentMonth);
+        });
+
+        fetchAndRenderCalendar(currentYear, currentMonth);
+    </script>
+</body>
+</html>

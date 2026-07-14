@@ -1,0 +1,431 @@
+/* ==========================================================================
+   LAGO PRO 디자인 시스템 테마 정의 (완전판 마스터 피스)
+   ========================================================================== */
+:root {
+    --bg-main: #F4F5F9;             /* 스크린샷 베이스 미니멀 배경색 */
+    --primary-purple: #8B32FF;      /* LAGO 시그니처 퍼플 */
+    --primary-hover: #7212FF;
+    --mint-accent: #00BFA5;         /* 단어장 필터 및 토글 민트 포인트 */
+    --text-dark: #1E2229;           /* 주 텍스트 컬러 */
+    --text-muted: #8A94A6;          /* 플레이스홀더 및 보조 텍스트 컬러 */
+    --border-light: #EBEFF5;        /* 1px 연한 회색 보더선 */
+    
+    /* 완벽한 UI 레이아웃 규격 */
+    --card-bg: #FFFFFF;
+    --input-bg: #F5F7FA;
+    --radius-main: 16px;
+    --radius-card: 12px;
+    --transition-base: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 1. 전역 스타일 및 초기화 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-dark);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Link 태그 완전 플랫화 */
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* 2. 상단 헤더 바 (듀오링고 토큰 스타일) */
+.top-navbar {
+    width: 100%;
+    height: 60px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 24px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+}
+
+.nav-left-brand {
+    font-size: 1.35rem;
+    color: var(--primary-purple);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.nav-right-stats {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* 3. 인증 시스템 레이아웃 (로그인 / 회원가입 마스터 패널) */
+.auth-wrapper {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+}
+
+.auth-portal {
+    width: 100%;
+    max-width: 440px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-main);
+    padding: 40px 36px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.01);
+}
+
+.auth-logo-area {
+    text-align: center;
+    margin-bottom: 18px;
+}
+
+.auth-logo-box {
+    width: 56px;
+    height: 56px;
+    background: var(--primary-purple);
+    border-radius: 14px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    color: #FFFFFF;
+    font-size: 1.5rem;
+}
+
+.auth-portal h1 {
+    font-size: 1.7rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+}
+
+.auth-portal .subtitle {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 28px;
+    line-height: 1.4;
+}
+
+/* 세그먼트 탭 링크 바 */
+.tab-segment {
+    display: flex;
+    background: var(--input-bg);
+    padding: 4px;
+    border-radius: 10px;
+    margin-bottom: 28px;
+}
+
+.tab-btn {
+    flex: 1;
+    border: none;
+    padding: 11px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: var(--transition-base);
+    text-align: center;
+}
+
+.tab-btn.active {
+    background: #FFFFFF;
+    color: var(--text-dark);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+}
+
+/* 입력 필드 폼 */
+.form-field {
+    margin-bottom: 20px;
+}
+
+.form-field label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-dark);
+}
+
+.input-control {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--input-bg);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+    outline: none;
+    transition: var(--transition-base);
+}
+
+.input-control::placeholder {
+    color: var(--text-muted);
+}
+
+.input-control:focus {
+    border-color: var(--primary-purple);
+    background: #FFFFFF;
+}
+
+/* 메인 기능 보라색 단추 */
+.btn-submit {
+    width: 100%;
+    padding: 15px;
+    background: var(--primary-purple);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition-base);
+    margin-top: 8px;
+}
+
+.btn-submit:hover {
+    background: var(--primary-hover);
+}
+
+/* 하단 대결 / 랭킹 전용 스크린샷 100% 매칭 서브 단추리스트 */
+.sub-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.btn-sub-outline {
+    padding: 13px;
+    background: #FFFFFF;
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+
+.btn-sub-outline:hover {
+    background: var(--input-bg);
+}
+
+/* 4. 메인 단어장 전용 마스터 대시보드 구조 */
+.main-container {
+    max-width: 800px;
+    width: 100%;
+    margin: 85px auto 40px auto;
+    padding: 0 16px;
+}
+
+.wordbook-tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--border-light);
+    margin-bottom: 24px;
+}
+
+.wb-tab-item {
+    padding: 12px 16px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.wb-tab-item.active {
+    color: var(--text-dark);
+    border-bottom: 3px solid var(--primary-purple);
+}
+
+.wordbook-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+.badge-info {
+    font-size: 0.75rem;
+    background: #E8E5FF;
+    color: var(--primary-purple);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+/* 관리 기능 단추 세트 */
+.btn-core {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border-light);
+    background: #FFFFFF;
+    transition: var(--transition-base);
+}
+
+.btn-core.purple {
+    background: var(--primary-purple);
+    color: #FFFFFF;
+    border: none;
+}
+
+.btn-core.purple:hover {
+    background: var(--primary-hover);
+}
+
+/* 검색 필터 단락 */
+.filter-bar {
+    display: flex;
+    gap: 8px;
+    margin: 20px 0 12px 0;
+}
+
+.select-control {
+    padding: 8px 16px;
+    background: #FFFFFF;
+    border: 1px solid var(--border-light);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: var(--text-dark);
+    outline: none;
+}
+
+.search-wrapper {
+    position: relative;
+    margin-bottom: 16px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 16px 12px 40px;
+    background: #FFFFFF;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+/* 폰트 및 보기 옵션 컨트롤 그룹 */
+.option-toggle-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #FFFFFF;
+    padding: 4px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+    margin-bottom: 20px;
+    font-size: 0.85rem;
+}
+
+.toggle-item {
+    padding: 6px 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.toggle-item.active-mint {
+    background: var(--mint-accent);
+    color: #FFFFFF;
+}
+
+/* 5. 단어 카드 뷰 컴포넌트 마스터 */
+.word-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.word-item-card {
+    background: #FFFFFF;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-card);
+    padding: 18px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: var(--transition-base);
+}
+
+.word-content-left h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.speaker-icon {
+    color: var(--primary-purple);
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.word-meaning {
+    margin-top: 4px;
+    font-size: 0.95rem;
+    color: var(--primary-purple);
+    font-weight: 500;
+}
+
+.word-actions-right {
+    display: flex;
+    gap: 14px;
+    font-size: 1.15rem;
+    color: var(--text-muted);
+}
+
+.action-icon-btn {
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+
+.action-icon-btn:hover {
+    color: var(--text-dark);
+}
+
+.hidden {
+    display: none !important;
+}

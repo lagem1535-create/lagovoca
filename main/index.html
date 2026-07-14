@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LAGO VOCA - 메인 단어장 (AI 프리미엄)</title>
+    <link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+            window.location.href = '../login/index.html';
+        }
+    </script>
+    <style>
+        :root {
+            --bg-main: #F8FAFC;
+            --surface-white: #FFFFFF;
+            --border-light: #E2E8F0;
+            --text-dark: #0F172A;
+            --text-muted: #64748B;
+            --point-purple: #8B32FF;
+            --point-purple-hover: #7212FF;
+            --point-mint: #10B981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, sans-serif;
+            letter-spacing: -0.02em;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 내비게이션 바 스타일링 */
+        .top-navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #FFFFFF;
+            padding: 12px 24px;
+            border-bottom: 1px solid #E1E5EC;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .nav-left-brand {
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: #1E2229;
+            cursor: pointer;
+        }
+        .nav-center-menu {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .nav-badge-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #5C6470;
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+        .badge-streak {
+            background: #F4F9F8;
+            color: #2D4A43;
+            transition: all 0.2s ease;
+        }
+        .badge-streak:hover {
+            background: #E6F4F1;
+            transform: scale(1.03);
+        }
+        .badge-gem {
+            background: #F0F4FF;
+            color: #3B82F6;
+        }
+        
+        .nav-dropdown-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        .nav-menu-trigger {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #1E2229;
+            cursor: pointer;
+            padding: 6px 10px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .nav-menu-trigger:hover {
+            background: #F1F3F7;
+        }
+        .nav-menu-trigger i {
+            width: 16px;
+            height: 16px;
+            color: #8A94A6;
+        }
+        
+        /* 드롭다운 박스 기본 스타일 정의 */
+        .dropdown-content-box {
+            position: absolute;
+            background: #FFFFFF;
+            min-width: 140px;
+            border: 1px solid #E1E5EC;
+            border-radius: 12px;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            transform: translateY(-4px);
+            z-index: 1000;
+            padding: 6px;
+        }
+        
+        /* 마우스 호버 시 끊김 방지 브릿지 처리 적용 */
+        .nav-dropdown-wrapper:hover .dropdown-content-box {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+        
+        .dropdown-item-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1E2229;
+            text-decoration: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .dropdown-item-link:hover {
+            background: var(--point-mint) !important;
+            color: #FFFFFF !important;
+        }
+        
+        .nav-right-profile-zone {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* 보더가 전혀 없는 초극강 미니멀 화이트 설정 버튼 반응 효과 */
+        #setting-menu-btn:hover {
+            background: #F1F3F7 !important; /* 호버 시에만 아주 부드러운 회색조 피드백 제공 */
+        }
+
+        .btn-logout-icon {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #5C6470;
+            display: flex;
+            align-items: center;
+            padding: 6px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .btn-logout-icon:hover {
+            background: #F1F3F7;
+            color: #EF4444;
+        }
+
+        /* 메인 컨테이너 */
+        .main-container {
+            max-width: 1040px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 24px;
+            flex: 1;
+        }
+
+        /* 단어장 다중 관리 탭 */
+        .wordbook-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+            margin-bottom: 16px;
+        }
+        .wb-tab-item {
+            padding: 8px 16px;
+            background: #E2E8F0;
+            color: var(--text-dark);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .wb-tab-item.active {
+            background: var(--point-purple);
+            color: white;
+        }
+        .btn-add-tab {
+            padding: 8px 14px;
+            background: #F1F3F7;
+            border: 1px dashed #CBD5E1;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-weight: 600;
+            color: #5C6470;
+        }
+        .btn-add-tab:hover { background: #E5E8ED; }
+
+        .wordbook-meta {
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .wordbook-title-row {
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        .wordbook-sub-info {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* 대시보드 버튼 제어 영역 */
+        .action-button-grid {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+        .btn-lago-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid #E1E5EC;
+            background: #FFFFFF;
+            color: #1E2229;
+            transition: all 0.2s ease;
+        }
+        .btn-lago-action i {
+            width: 18px;
+            height: 18px;
+        }
+        .btn-lago-action.add-word {
+            background: var(--point-purple);
+            color: #FFFFFF;
+            border-color: var(--point-purple);
+        }
+        .btn-lago-action.add-word:hover {
+            background: var(--point-purple-hover);
+        }
+        .btn-lago-action:not(.add-word):not(.danger):hover {
+            background: var(--point-mint) !important;
+            color: #FFFFFF !important;
+            border-color: var(--point-mint) !important;
+        }
+        .btn-lago-action.danger {
+            color: #EF4444;
+            border-color: #E1E5EC;
+        }
+        .btn-lago-action.danger:hover {
+            background: #EF4444 !important;
+            color: #FFFFFF !important;
+            border-color: #EF4444 !important;
+        }
+
+        /* 검색창 */
+        .search-wrapper { margin-bottom: 20px; }
+        .search-input {
+            width: 100%;
+            padding: 14px 20px;
+            border: 1.5px solid var(--border-light);
+            border-radius: 14px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus { border-color: var(--point-purple); }
+
+        /* 토글 옵션 바 */
+        .option-toggle-group {
+            display: flex;
+            background: #E2E8F0;
+            padding: 4px;
+            border-radius: 10px;
+        }
+        .toggle-item {
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px;
+            color: var(--text-muted);
+            user-select: none;
+        }
+        .toggle-item.active-mint {
+            background: var(--surface-white);
+            color: var(--text-dark);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+
+        /* 단어 카드 리스트 배치 */
+        .word-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; margin-top: 16px; }
+        .word-item-card {
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.01);
+        }
+        .word-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .word-content-left h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+        .speaker-icon { font-size: 1rem; cursor: pointer; }
+        .word-meaning { font-size: 0.95rem; color: var(--text-muted); font-weight: 600; }
+        
+        .word-example-box {
+            background: #F8FAFC;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 0.85rem;
+            border-left: 3px solid var(--point-purple);
+            color: #334155;
+            line-height: 1.4;
+        }
+
+        .word-actions-right { display: flex; gap: 8px; font-size: 1.1rem; }
+        .action-icon-btn { cursor: pointer; user-select: none; }
+
+        /* 모달 팝업 레이어 */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.2s ease; z-index: 9999;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .voca-modal {
+            background: #FFFFFF; padding: 24px; border-radius: 20px;
+            width: 90%; max-width: 460px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+            transform: scale(0.9); transition: transform 0.2s ease;
+        }
+        .modal-overlay.active .voca-modal { transform: scale(1); }
+        .modal-title { font-size: 1.25rem; font-weight: 700; color: #1E2229; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+        
+        .modal-flex-row {
+            display: flex;
+            gap: 12px;
+        }
+        .modal-field { margin-top: 14px; flex: 1; }
+        .modal-field label { display: block; font-size: 0.85rem; color: #8A94A6; margin-bottom: 6px; font-weight: 600; }
+        .modal-input, .modal-select, .modal-textarea { width: 100%; padding: 12px 16px; border: 1.5px solid #E1E5EC; border-radius: 12px; font-size: 1rem; outline: none; box-sizing: border-box; background: #fff; }
+        .modal-input:focus, .modal-select:focus, .modal-textarea:focus { border-color: var(--point-purple); }
+        .modal-textarea { resize: none; font-size: 0.9rem; height: 80px; }
+
+        /* AI 버튼 스타일 */
+        .btn-ai-generate {
+            width: 100%;
+            margin-top: 16px;
+            padding: 12px;
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #0F172A;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            transition: all 0.2s;
+        }
+        .btn-ai-generate:hover {
+            background: #F8FAFC;
+            border-color: var(--point-purple);
+        }
+        .btn-ai-generate:disabled {
+            background: #F1F3F7;
+            color: #94A3B8;
+            cursor: not-allowed;
+        }
+
+        .modal-actions { display: flex; gap: 8px; margin-top: 24px; }
+        .btn-modal { flex: 1; padding: 12px; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+        .btn-modal.cancel { background: #F1F3F7; color: #5C6470; }
+        .btn-modal.confirm { background: var(--point-purple); color: #FFFFFF; }
+
+        /* 가변 뷰 설정 제어 클래스 */
+        .size-small .word-item-card h2 { font-size: 1.1rem !important; }
+        .size-large .word-item-card h2 { font-size: 1.8rem !important; }
+        .display-hide-meaning .word-meaning, .display-hide-meaning .word-example-box { display: none !important; }
+        .display-hide-word .word-content-left h2 { color: transparent !important; text-shadow: 0 0 8px rgba(30,34,41,0.6); }
+        .view-list { display: flex; flex-direction: column; gap: 10px; }
+        .view-list .word-item-card { padding: 14px 20px; flex-direction: row; align-items: center; }
+        .view-list .word-example-box { margin-top: 0; max-width: 50%; }
+        #file-import-input { display: none; }
+
+        .toast-container {
+            position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-20px);
+            background: #0F172A; color: white; padding: 12px 24px; border-radius: 12px;
+            box-shadow: 0 10px 24px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 8px;
+            z-index: 10005; opacity: 0; pointer-events: none; transition: all 0.3s ease;
+        }
+        .toast-container.active { opacity: 1; transform: translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+
+    <div class="toast-container" id="main-toast">
+        <span id="main-toast-text" style="font-size: 0.9rem; font-weight: 600;">알림</span>
+    </div>
+
+    <input type="file" id="file-import-input" accept=".json" onchange="handleJsonImport(event)">
+
+    <!-- 글로벌 네비게이션 상단바 -->
+    <header class="top-navbar">
+        <div class="nav-left-brand" onclick="location.reload()">LAGO VOCA</div>
+        
+        <div class="nav-center-menu">
+            <div class="nav-badge-item badge-streak" onclick="location.href='../continue/index.html'" style="cursor: pointer;">
+                <i data-lucide="flame" style="width:16px;"></i>
+                <span id="streak-count-display">불러오는 중...</span>
+            </div>
+            <div class="nav-badge-item badge-gem">
+                <i data-lucide="gem" style="width:15px; height:15px; color:#3B82F6;"></i>
+                <span id="gem-count-display">0</span> P
+            </div>
+            
+            <div class="nav-menu-trigger"><i data-lucide="book-open"></i> 단어장</div>
+            <div class="nav-dropdown-wrapper">
+                <div class="nav-menu-trigger"><i data-lucide="brain"></i> 학습</div>
+            </div>
+            <div class="nav-dropdown-wrapper">
+                <div class="nav-menu-trigger"><i data-lucide="users"></i> 소셜 <i data-lucide="chevron-down"></i></div>
+                <div class="dropdown-content-box">
+                    <div class="dropdown-item-link" onclick="displayToast('대결 모드 준비 중!')">
+                        <i data-lucide="swords" style="width:16px; height:16px;"></i> 대결
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-right-profile-zone">
+            <!-- 보더(border: none)를 완벽히 제거하여 극강의 화이트 미니멀리즘을 연출한 설정 버튼입니다 -->
+            <div class="nav-dropdown-wrapper" style="padding-bottom: 24px; margin-bottom: -24px;">
+                <div class="nav-menu-trigger" id="setting-menu-btn" style="color: #1E2229; background: #FFFFFF; border: none; border-radius: 8px; padding: 6px 12px; transition: background 0.15s ease;">
+                    <i data-lucide="settings" style="width: 16px; height: 16px; color: #5C6470;"></i> 설정 <i data-lucide="chevron-down" style="width: 14px; height: 14px; color: #8A94A6;"></i>
+                </div>
+                <!-- 하단 드롭다운 박스 유격 연동 -->
+                <div class="dropdown-content-box" style="right: 0; left: auto; transform: none; min-width: 140px; top: 38px;">
+                    <div class="dropdown-item-link" onclick="navigateToProfilePage()" style="cursor: pointer; user-select: none;">
+                        <i data-lucide="user" style="width:15px; height:15px;"></i> 프로필 설정
+                    </div>
+                </div>
+            </div>
+            <button class="btn-logout-icon" onclick="handleLogout()" title="로그아웃" style="margin-left: 8px;">
+                <i data-lucide="log-out" style="width:18px; height:18px;"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <div class="wordbook-tabs">
+            <div id="tabs-wrapper" style="display: flex; gap: 6px;"></div>
+            <button class="btn-add-tab" onclick="openAddBookModal()">+ 단어장 추가</button>
+        </div>
+
+        <div class="wordbook-meta">
+            <div class="wordbook-title-row">
+                📖 <span id="active-book-title-text">기본 단어장</span>
+            </div>
+            <div class="wordbook-sub-info">
+                소유자: @<span id="owner-id">user</span> · 총 <span id="total-words-count">0</span>개 단어 보유
+            </div>
+        </div>
+
+        <div class="action-button-grid">
+            <button class="btn-lago-action add-word" onclick="openAddWordModal()">
+                <i data-lucide="plus"></i>단어 추가
+            </button>
+            <button class="btn-lago-action" onclick="exportWordsToJsonFile()">
+                <i data-lucide="download-cloud"></i>내보내기 (JSON)
+            </button>
+            <button class="btn-lago-action" onclick="triggerImportFileInput()">
+                <i data-lucide="upload-cloud"></i>가져오기
+            </button>
+            <button class="btn-lago-action danger" onclick="clearAllWords()">
+                <i data-lucide="trash-2"></i>전체 데이터 삭제
+            </button>
+        </div>
+
+        <div class="search-wrapper">
+            <input type="text" id="search-bar" class="search-input" placeholder="🔍 검색하고 싶은 영단어나 의미를 입력하세요..." oninput="renderWords()">
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 12px; flex-wrap: wrap;">
+            <div class="option-toggle-group">
+                <span class="toggle-item" onclick="setRes('size', 'small', this)">작게</span>
+                <span class="toggle-item active-mint" onclick="setRes('size', 'normal', this)">보통</span>
+                <span class="toggle-item" onclick="setRes('size', 'large', this)">크게</span>
+            </div>
+            <div class="option-toggle-group">
+                <span class="toggle-item active-mint" onclick="setRes('display', 'all', this)">모두 보기</span>
+                <span class="toggle-item" onclick="setRes('display', 'word-only', this)">단어만</span>
+                <span class="toggle-item" onclick="setRes('display', 'meaning-only', this)">뜻만</span>
+            </div>
+            <div class="option-toggle-group">
+                <span class="toggle-item active-mint" onclick="setRes('view', 'card', this)">카드뷰</span>
+                <span class="toggle-item" onclick="setRes('view', 'list', this)">리스트뷰</span>
+            </div>
+        </div>
+
+        <div class="word-grid" id="word-list-target">
+            <div style="text-align: center; padding: 40px; color: var(--text-muted); width:100%;">서버 엔진 싱크 가동 중...</div>
+        </div>
+    </main>
+
+    <!-- 단어 추가 모달 -->
+    <div class="modal-overlay" id="add-word-modal" onclick="closeAddWordModal()">
+        <div class="voca-modal" onclick="event.stopPropagation()">
+            <div class="modal-title">📝 단어 추가하기</div>
+            <form id="modal-form" onsubmit="submitAddWord(event)">
+                <div class="modal-flex-row">
+                    <div class="modal-field">
+                        <label>영어 단어 (Word)</label>
+                        <input type="text" id="modal-word" class="modal-input" required autocomplete="off" placeholder="예: ephemeral">
+                    </div>
+                    <div class="modal-field">
+                        <label>한국어 뜻 (Meaning)</label>
+                        <input type="text" id="modal-meaning" class="modal-input" required autocomplete="off" placeholder="순간적인, 덧없는">
+                    </div>
+                </div>
+
+                <div class="modal-flex-row">
+                    <div class="modal-field">
+                        <label>품사</label>
+                        <select class="modal-select" id="modal-pos">
+                            <option>명사</option>
+                            <option>동사</option>
+                            <option>형용사</option>
+                            <option>부사</option>
+                            <option selected>기타</option>
+                        </select>
+                    </div>
+                    <div class="modal-field">
+                        <label>카테고리</label>
+                        <select class="modal-select" id="modal-category">
+                            <option selected>일반</option>
+                            <option>비즈니스</option>
+                            <option>TOEFL/TOEIC</option>
+                            <option>일상 회화</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="button" class="btn-ai-generate" id="btn-ai-spark" onclick="generateWordDataWithAI()">
+                    <i data-lucide="sparkles" style="width: 16px; color: var(--point-purple);"></i> AI로 뜻 + 예문 자동 생성
+                </button>
+
+                <div class="modal-field">
+                    <label>학습용 예문 (쉬움)</label>
+                    <textarea id="modal-example" class="modal-textarea" placeholder="AI 연동 시 예문과 번역이 자동으로 기입됩니다."></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-modal cancel" onclick="closeAddWordModal()">취소</button>
+                    <button type="submit" class="btn-modal confirm">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="add-book-modal" onclick="closeAddBookModal()">
+        <div class="voca-modal" onclick="event.stopPropagation()">
+            <div class="modal-title">📂 새 단어장 분할 생성</div>
+            <form id="book-modal-form" onsubmit="submitAddBook(event)">
+                <div class="modal-field">
+                    <label>단어장 그룹 이름</label>
+                    <input type="text" id="modal-book-name" class="modal-input" required autocomplete="off">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-modal cancel" onclick="closeAddBookModal()">취소</button>
+                    <button type="submit" class="btn-modal confirm">그룹 생성</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const DB_BASE_URL = "https://fir-2-f3b80-default-rtdb.asia-southeast1.firebasedatabase.app";
+        const currentUserId = sessionStorage.getItem('currentUserId') || "user";
+        
+        const GEMINI_API_KEY = "AQ.Ab8RN6LrMExt0iClRbXOp86-4HPY51R_mvuz-kxHUkR4gihu9w";
+        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+        let notebookList = ['기본 단어장']; 
+        let currentActiveBook = '기본 단어장';
+        let localWordsMemory = [];
+        let viewConfig = { size: 'normal', display: 'all', view: 'card' };
+
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById('owner-id').innerText = currentUserId;
+            
+            if(!localStorage.getItem(`${currentUserId}_gems`)) {
+                localStorage.setItem(`${currentUserId}_gems`, 4710);
+            }
+
+            syncUserWalletState();
+            loadUserStreakFromServer();
+            initNotebooks();
+        });
+
+        function syncUserWalletState() {
+            if (!currentUserId) return;
+            const userGemWallet = localStorage.getItem(`${currentUserId}_gems`) || 4710;
+            document.getElementById('gem-count-display').innerText = Number(userGemWallet).toLocaleString();
+        }
+
+        async function loadUserStreakFromServer() {
+            try {
+                const res = await fetch(`${DB_BASE_URL}/streaks/${currentUserId}.json`);
+                const data = await res.json();
+                if (data && typeof data.count !== 'undefined') {
+                    document.getElementById('streak-count-display').innerText = `${data.count}일 연속 완료`;
+                } else {
+                    document.getElementById('streak-count-display').innerText = `0일 연속 완료`;
+                }
+            } catch (error) {
+                document.getElementById('streak-count-display').innerText = `연동 요망`;
+            }
+        }
+
+        function navigateToProfilePage() { 
+            window.location.href = '../profile/index.html'; 
+        }
+
+        function displayToast(text) {
+            const toast = document.getElementById('main-toast');
+            document.getElementById('main-toast-text').innerText = text;
+            toast.classList.add('active');
+            setTimeout(() => toast.classList.remove('active'), 2500);
+        }
+
+        async function initNotebooks() {
+            try {
+                const res = await fetch(`${DB_BASE_URL}/notebooks/${currentUserId}.json`);
+                const data = await res.json();
+                if (data) {
+                    notebookList = Object.keys(data);
+                    if(!notebookList.includes(currentActiveBook)) currentActiveBook = notebookList[0];
+                }
+                renderTabs();
+                loadWordsFromServer();
+            } catch (e) {
+                renderTabs();
+                loadWordsFromServer();
+            }
+        }
+
+        function renderTabs() {
+            const wrapper = document.getElementById('tabs-wrapper');
+            wrapper.innerHTML = notebookList.map(name => `
+                <div class="wb-tab-item ${name === currentActiveBook ? 'active' : ''}" onclick="switchNotebook('${name}')">
+                    ${name}
+                </div>
+            `).join('');
+            document.getElementById('active-book-title-text').innerText = currentActiveBook;
+        }
+
+        function switchNotebook(bookName) {
+            currentActiveBook = bookName;
+            renderTabs();
+            loadWordsFromServer();
+        }
+
+        function openAddBookModal() { document.getElementById('add-book-modal').classList.add('active'); document.getElementById('modal-book-name').focus(); }
+        function closeAddBookModal() { document.getElementById('add-book-modal').classList.remove('active'); document.getElementById('book-modal-form').reset(); }
+        
+        async function submitAddBook(event) {
+            event.preventDefault();
+            const bookName = document.getElementById('modal-book-name').value.trim();
+            if(notebookList.includes(bookName)) {
+                displayToast("이미 개설된 단어장 식별자명입니다.");
+                return;
+            }
+            try {
+                await fetch(`${DB_BASE_URL}/notebooks/${currentUserId}/${bookName}.json`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ createdAt: new Date().toISOString() })
+                });
+                closeAddBookModal();
+                displayToast(`[${bookName}] 그룹 단어장이 활성화되었습니다.`);
+                currentActiveBook = bookName;
+                initNotebooks();
+            } catch(e) {
+                displayToast("네트워크 트랜잭션 오류");
+            }
+        }
+
+        async function loadWordsFromServer() {
+            try {
+                const targetPath = encodeURIComponent(currentActiveBook);
+                const res = await fetch(`${DB_BASE_URL}/words/${currentUserId}/${targetPath}.json`);
+                const data = await res.json();
+                localWordsMemory = [];
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        localWordsMemory.push({ firebaseId: key, ...data[key] });
+                    });
+                }
+                document.getElementById('total-words-count').innerText = localWordsMemory.length;
+                renderWords();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function renderWords() {
+            const target = document.getElementById('word-list-target');
+            const keyword = document.getElementById('search-bar').value.toLowerCase().trim();
+            
+            const filtered = localWordsMemory.filter(w => 
+                w.word.toLowerCase().includes(keyword) || w.meaning.toLowerCase().includes(keyword)
+            );
+
+            if (filtered.length === 0) {
+                target.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--text-muted); width:100%;">매칭 및 수록된 영단어가 비어있습니다.</div>`;
+                return;
+            }
+
+            target.innerHTML = filtered.map(w => `
+                <div class="word-item-card">
+                    <div class="word-card-top">
+                        <div class="word-content-left">
+                            <h2>${w.word} <span class="speaker-icon" onclick="speakWord(event, '${w.word}')">🔊</span></h2>
+                            <div class="word-meaning">${w.meaning}</div>
+                        </div>
+                        <div class="word-actions-right">
+                            <span class="action-icon-btn">⭐</span>
+                            <span class="action-icon-btn" onclick="deleteSingleWord('${w.firebaseId}')" style="color:#FF5252;">🗑️</span>
+                        </div>
+                    </div>
+                    ${w.example ? `<div class="word-example-box">${w.example.replace(/\n/g, '<br>')}</div>` : ''}
+                </div>
+            `).join('');
+            
+            lucide.createIcons();
+        }
+
+        async function generateWordDataWithAI() {
+            const wordInput = document.getElementById('modal-word').value.trim();
+            if (!wordInput) {
+                displayToast("영어 단어를 먼저 기입해 주세요.");
+                return;
+            }
+
+            const sparkBtn = document.getElementById('btn-ai-spark');
+            sparkBtn.disabled = true;
+            sparkBtn.innerHTML = `분석 및 예문 생성 중...`;
+
+            const promptText = `Provide the Korean meaning and exactly one easy English example sentence with Korean translation for the word "${wordInput}". 
+            You must reply ONLY with a flat JSON object structure, absolutely no markdown wrappers, no backticks, and no other text.
+            JSON structure:
+            {
+              "meaning": "대표적인 한국어 뜻 단어 한두개",
+              "example": "쉬운 영어 예문 문장\\n(한국어 예문 해석)"
+            }`;
+
+            try {
+                const response = await fetch(GEMINI_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: promptText }] }]
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API Response Server Error: Status ${response.status}`);
+                }
+
+                const result = await response.json();
+                if (!result.candidates || result.candidates.length === 0) {
+                    throw new Error("No candidates returned from API");
+                }
+
+                let aiResponseText = result.candidates[0].content.parts[0].text.trim();
+                aiResponseText = aiResponseText.replace(/```json/gi, "").replace(/```/g, "").trim();
+                
+                const jsonMatch = aiResponseText.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) {
+                    throw new Error("Failed to extract JSON body string pattern");
+                }
+                
+                const parsedData = JSON.parse(jsonMatch[0]);
+                
+                if (parsedData.meaning) document.getElementById('modal-meaning').value = parsedData.meaning;
+                if (parsedData.example) document.getElementById('modal-example').value = parsedData.example;
+                
+                displayToast("AI가 뜻과 맞춤형 예문을 채워 넣었습니다!");
+            } catch (error) {
+                console.error("AI 생성 에러 디버깅 로그:", error);
+                displayToast("AI 데이터를 받아오는 도중 오류가 발생했습니다.");
+            } finally {
+                sparkBtn.disabled = false;
+                sparkBtn.innerHTML = `<i data-lucide="sparkles" style="width: 16px; color: var(--point-purple);"></i> AI로 뜻 + 예문 자동 생성`;
+                lucide.createIcons();
+            }
+        }
+
+        function setRes(type, value, element) {
+            element.parentElement.querySelectorAll('.toggle-item').forEach(el => el.classList.remove('active-mint'));
+            element.classList.add('active-mint');
+            viewConfig[type] = value;
+
+            const targetContainer = document.getElementById('word-list-target');
+            targetContainer.className = ""; 
+            
+            if(viewConfig.view === 'card') targetContainer.classList.add('word-grid');
+            else targetContainer.classList.add('view-list');
+
+            if(viewConfig.size === 'small') targetContainer.classList.add('size-small');
+            else if(viewConfig.size === 'large') targetContainer.classList.add('size-large');
+
+            if(viewConfig.display === 'word-only') targetContainer.classList.add('display-hide-meaning');
+            else if(viewConfig.display === 'meaning-only') targetContainer.classList.add('display-hide-word');
+        }
+
+        function exportWordsToJsonFile() {
+            if (localWordsMemory.length === 0) {
+                displayToast("내보낼 데이터 어레이가 존재하지 않습니다.");
+                return;
+            }
+            const cleanData = localWordsMemory.map(({ word, meaning, example, createdAt }) => ({ word, meaning, example, createdAt }));
+            const jsonString = JSON.stringify(cleanData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
+            
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `lago_voca_${currentUserId}_backup.json`;
+            link.click();
+            displayToast("로컬 다운로드 폴더로 백업 완료!");
+        }
+
+        function triggerImportFileInput() { document.getElementById('file-import-input').click(); }
+
+        async function handleJsonImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const importedArray = JSON.parse(e.target.result);
+                    if(!Array.isArray(importedArray)) return;
+
+                    displayToast("데이터 동기화 병렬 처리 중...");
+                    const targetPath = encodeURIComponent(currentActiveBook);
+
+                    for(let item of importedArray) {
+                        if(item.word && item.meaning) {
+                            await fetch(`${DB_BASE_URL}/words/${currentUserId}/${targetPath}.json`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ 
+                                    word: item.word.trim(), 
+                                    meaning: item.meaning.trim(), 
+                                    example: item.example ? item.example.trim() : '',
+                                    createdAt: new Date().toISOString() 
+                                })
+                            });
+                        }
+                    }
+                    document.getElementById('file-import-input').value = "";
+                    await loadWordsFromServer();
+                    displayToast("동기화 업로드가 완수되었습니다.");
+                } catch(err) {
+                    displayToast("파싱 파이프라인 에러");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function openAddWordModal() { document.getElementById('add-word-modal').classList.add('active'); document.getElementById('modal-word').focus(); }
+        function closeAddWordModal() { document.getElementById('add-word-modal').classList.remove('active'); document.getElementById('modal-form').reset(); }
+
+        async function submitAddWord(event) {
+            event.preventDefault();
+            const word = document.getElementById('modal-word').value.trim();
+            const meaning = document.getElementById('modal-meaning').value.trim();
+            const example = document.getElementById('modal-example').value.trim();
+            const targetPath = encodeURIComponent(currentActiveBook);
+
+            try {
+                await fetch(`${DB_BASE_URL}/words/${currentUserId}/${targetPath}.json`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        word: word, 
+                        meaning: meaning, 
+                        example: example,
+                        createdAt: new Date().toISOString() 
+                    })
+                });
+                closeAddWordModal();
+                displayToast("단어 레코드가 추가되었습니다.");
+                loadWordsFromServer();
+            } catch (error) {
+                displayToast("네트워크 장애");
+            }
+        }
+
+        async function deleteSingleWord(firebaseId) {
+            if (!confirm("해당 단어를 영구 삭제 처리하시겠습니까?")) return;
+            const targetPath = encodeURIComponent(currentActiveBook);
+            try {
+                await fetch(`${DB_BASE_URL}/words/${currentUserId}/${targetPath}/${firebaseId}.json`, { method: 'DELETE' });
+                displayToast("정상 삭제 완료");
+                loadWordsFromServer();
+            } catch (error) { displayToast("삭제 실패"); }
+        }
+
+        async function clearAllWords() {
+            if (!confirm("모든 단어 레코드가 소멸합니다. 진행하시겠습니까?")) return;
+            const targetPath = encodeURIComponent(currentActiveBook);
+            try {
+                await fetch(`${DB_BASE_URL}/words/${currentUserId}/${targetPath}.json`, { method: 'DELETE' });
+                displayToast("초기화 완료");
+                loadWordsFromServer();
+            } catch (error) { displayToast("초기화 실패"); }
+        }
+
+        function speakWord(e, text) { e.stopPropagation(); if ('speechSynthesis' in window) { const ut = new SpeechSynthesisUtterance(text); ut.lang = 'en-US'; window.speechSynthesis.speak(ut); } }
+        function handleLogout() { if(confirm("로그아웃 하시겠습니까?")) { sessionStorage.clear(); window.location.href = '../login/index.html'; } }
+
+        lucide.createIcons();
+    </script>
+</body>
+</html>
